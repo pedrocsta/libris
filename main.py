@@ -1,8 +1,9 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton
-from PyQt5.QtGui import QIcon, QCursor
+import os
+import shutil
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFileDialog
+from PyQt5.QtGui import QIcon, QCursor, QPixmap
 from PyQt5.QtCore import Qt, QSize, QPoint
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -38,6 +39,34 @@ class MainWindow(QMainWindow):
         """)
 
         left_column_layout = QVBoxLayout(left_column)
+
+        icon_container = QWidget(self)
+        icon_layout = QVBoxLayout(icon_container)
+
+        icon_label = QLabel(self)
+        pixmap = QPixmap("resources/icons/icon.png")
+        scaled_pixmap = pixmap.scaled(65, 65, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_label.setPixmap(scaled_pixmap)
+        icon_label.setAlignment(Qt.AlignCenter)
+
+        icon_layout.addWidget(icon_label, alignment=Qt.AlignCenter)
+        icon_layout.setContentsMargins(0, 30, 0, 0)
+
+        left_column_layout.addWidget(icon_container)
+
+        add_book_button = QPushButton("Adicionar Livro", self)
+        add_book_button.setCursor(QCursor(Qt.PointingHandCursor))
+        add_book_button.setStyleSheet("""
+            color: #1890FF;
+            font-size: 15px;
+            background-color: #FFFFFF;
+            border: 1px solid #1890FF;
+            padding: 5px;
+            margin-top: 10px;
+            border-radius: 5px;
+        """)
+        add_book_button.clicked.connect(self.add_book)
+        left_column_layout.addWidget(add_book_button)
 
         settings_button = QPushButton("Configurações", self)
         settings_button.setCursor(QCursor(Qt.PointingHandCursor))
@@ -112,7 +141,6 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # Conectar eventos de hover
         self.close_button.enterEvent = self.onCloseButtonHoverEnter
         self.close_button.leaveEvent = self.onCloseButtonHoverLeave
 
@@ -163,6 +191,17 @@ class MainWindow(QMainWindow):
     def onCloseButtonHoverLeave(self, event):
         self.close_button.setIcon(QIcon("resources/icons/close.svg"))
         event.accept()
+
+    def add_book(self):
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getOpenFileName(self, "Selecione um Livro", "", "EPUB Files (*.epub)", options=options)
+        if file_name:
+            destination = os.path.join(os.getcwd(), 'books', os.path.basename(file_name))
+            try:
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                shutil.copy(file_name, destination)
+            except Exception as e:
+                print(f"Erro ao copiar o arquivo: {e}")
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton and event.pos().y() <= 30:
